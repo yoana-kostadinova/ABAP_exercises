@@ -1,0 +1,95 @@
+CLASS ztest_class_yo012 DEFINITION
+  PUBLIC
+  FINAL
+  CREATE PUBLIC .
+
+  PUBLIC SECTION.
+
+    INTERFACES if_oo_adt_classrun .
+  PROTECTED SECTION.
+  PRIVATE SECTION.
+ENDCLASS.
+
+
+
+CLASS ztest_class_yo012 IMPLEMENTATION.
+
+
+  METHOD if_oo_adt_classrun~main.
+
+
+    CONSTANTS c_carrier_id TYPE /dmo/carrier_id       VALUE 'LH'.
+    CONSTANTS c_connection_id TYPE /dmo/connection_id VALUE '0400'.
+
+    DATA connection  TYPE REF TO lcl_connection.
+    DATA connections  TYPE TABLE OF REF TO lcl_connection.
+
+* Create Instance
+**********************************************************************
+
+    connection = NEW #(  ).
+
+* Call Method and Handle Exception
+**********************************************************************
+    out->write(  |i_carrier_id    = '{ c_carrier_id }' | ).
+    out->write(  |i_connection_id = '{ c_connection_id }'| ).
+* сетват атрибутите на локалния клас с константите, дефинирани в глобалния
+    TRY.
+        connection->set_attributes(
+          EXPORTING
+            i_carrier_id    = c_carrier_id
+            i_connection_id = c_connection_id
+        ).
+* ако всичко е наред, викат метода, присвояват и после добавят ред в таблицата и принтят че е успешно
+        APPEND connection TO connections.
+        out->write( `Method call successful` ).
+* доколкото разбирам тази грешка ще се появи само ако присвояването не е успешно.
+* то не е успешно и при грешна стойност. при carrier_id тъй като е char(3) се присвояват
+* само първите три символа, колкото и дълъг низ да се подаде и не вади грешка
+* при connection_id трябва да са цифри и връща грешка при букви
+
+      CATCH cx_abap_invalid_value.
+        out->write( `Method call failed`     ).
+    ENDTRY.
+
+
+  ENDMETHOD.
+ENDCLASS.
+
+**********************
+*****LOCAL CLASS******
+**********************
+
+CLASS lcl_connection DEFINITION.
+  PUBLIC SECTION.
+
+* Attributes
+    DATA carrier_id    TYPE /dmo/carrier_id.
+    DATA connection_id TYPE /dmo/connection_id.
+
+* Methods
+    METHODS set_attributes
+      IMPORTING
+        i_carrier_id    TYPE /dmo/carrier_id  DEFAULT 'LH'
+        i_Connection_id TYPE /dmo/connection_id
+* тук явно декларират, че ще правят проверка за грешка
+      RAISING
+        cx_abap_invalid_value.
+
+
+ENDCLASS.
+
+CLASS lcl_connection IMPLEMENTATION.
+
+  METHOD set_attributes.
+* тук проверяват за грешка, в случай че входните променливи не се присвоят(имат начални стойности)
+    IF i_carrier_id IS INITIAL OR i_connection_id IS INITIAL.
+      RAISE EXCEPTION TYPE cx_abap_invalid_value.
+    ENDIF.
+* тук присвояват на атрибутите на локалния клас входните променливи
+    carrier_id    = i_carrier_id.
+    connection_id = i_connection_id.
+
+  ENDMETHOD.
+
+ENDCLASS.
